@@ -1,0 +1,255 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v5.json",
+  "background": "white",
+  "padding": 5,
+  "width": 300,
+  "title": {
+    "text": "Forest Coverage in the 10 most populous Countries(1990 to 2020).",
+    "frame": "group"
+  },
+  "style": "cell",
+  "data": [
+    {"name": "country_store"},
+    {
+      "name": "source_0",
+      "url": "https://raw.githubusercontent.com/TeoJieRu/Visualisation2/main/forest/use2.csv",
+      "format": {
+        "type": "csv",
+        "parse": {"Population Rank": "number", "Year": "number"},
+        "delimiter": ","
+      },
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "indexof([1,2,3,4,5,6,7,8,9,10], datum[\"Population Rank\"]) !== -1"
+        },
+        {
+          "type": "filter",
+          "expr": "indexof([1990,2020], datum[\"Year\"]) !== -1"
+        }
+      ]
+    },
+    {
+      "name": "data_0",
+      "source": "source_0",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "isValid(datum[\"Coverage\"]) && isFinite(+datum[\"Coverage\"])"
+        }
+      ]
+    }
+  ],
+  "signals": [
+    {"name": "y_step", "value": 20},
+    {
+      "name": "height",
+      "update": "bandspace(domain('y').length, 1, 0.5) * y_step"
+    },
+    {
+      "name": "unit",
+      "value": {},
+      "on": [
+        {"events": "mousemove", "update": "isTuple(group()) ? group() : unit"}
+      ]
+    },
+    {
+      "name": "country",
+      "update": "vlSelectionResolve(\"country_store\", \"union\", true, true)"
+    },
+    {
+      "name": "country_tuple",
+      "on": [
+        {
+          "events": [{"source": "scope", "type": "click"}],
+          "update": "datum && item().mark.marktype !== 'group' ? {unit: \"layer_0\", fields: country_tuple_fields, values: [(item().isVoronoi ? datum.datum : datum)[\"Country\"]]} : null",
+          "force": true
+        },
+        {"events": [{"source": "view", "type": "dblclick"}], "update": "null"}
+      ]
+    },
+    {
+      "name": "country_tuple_fields",
+      "value": [{"type": "E", "field": "Country"}]
+    },
+    {
+      "name": "country_toggle",
+      "value": false,
+      "on": [
+        {
+          "events": [{"source": "scope", "type": "click"}],
+          "update": "event.shiftKey"
+        },
+        {"events": [{"source": "view", "type": "dblclick"}], "update": "false"}
+      ]
+    },
+    {
+      "name": "country_modify",
+      "on": [
+        {
+          "events": {"signal": "country_tuple"},
+          "update": "modify(\"country_store\", country_toggle ? null : country_tuple, country_toggle ? null : true, country_toggle ? country_tuple : null)"
+        }
+      ]
+    }
+  ],
+  "marks": [
+    {
+      "name": "layer_0_pathgroup",
+      "type": "group",
+      "from": {
+        "facet": {
+          "name": "faceted_path_layer_0_main",
+          "data": "source_0",
+          "groupby": ["Country"]
+        }
+      },
+      "encode": {
+        "update": {
+          "width": {"field": {"group": "width"}},
+          "height": {"field": {"group": "height"}}
+        }
+      },
+      "marks": [
+        {
+          "name": "layer_0_marks",
+          "type": "line",
+          "style": ["line"],
+          "sort": {"field": "datum[\"Country\"]"},
+          "interactive": true,
+          "from": {"data": "faceted_path_layer_0_main"},
+          "encode": {
+            "update": {
+              "stroke": {"value": "#db646f"},
+              "opacity": [
+                {
+                  "test": "!length(data(\"country_store\")) || vlSelectionTest(\"country_store\", datum)",
+                  "value": 1
+                },
+                {"value": 0.2}
+              ],
+              "description": {
+                "signal": "\"Forest Coverage (%)): \" + (format(datum[\"Coverage\"], \"\")) + \"; Country: \" + (isValid(datum[\"Country\"]) ? datum[\"Country\"] : \"\"+datum[\"Country\"])"
+              },
+              "x": {"scale": "x", "field": "Coverage"},
+              "y": {"scale": "y", "field": "Country"},
+              "defined": {
+                "signal": "isValid(datum[\"Coverage\"]) && isFinite(+datum[\"Coverage\"])"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "layer_1_marks",
+      "type": "symbol",
+      "style": ["point"],
+      "interactive": true,
+      "from": {"data": "data_0"},
+      "encode": {
+        "update": {
+          "opacity": [
+            {
+              "test": "!length(data(\"country_store\")) || vlSelectionTest(\"country_store\", datum)",
+              "value": 1
+            },
+            {"value": 0.2}
+          ],
+          "fill": {"scale": "color", "field": "Year"},
+          "tooltip": {
+            "signal": "{\"Country\": isValid(datum[\"Country\"]) ? datum[\"Country\"] : \"\"+datum[\"Country\"], \"Forest Coverage (%)\": format(datum[\"Coverage\"], \".2f\"), \"Year\": isValid(datum[\"Year\"]) ? datum[\"Year\"] : \"\"+datum[\"Year\"]}"
+          },
+          "ariaRoleDescription": {"value": "point"},
+          "description": {
+            "signal": "\"Forest Coverage (%)): \" + (format(datum[\"Coverage\"], \"\")) + \"; Country: \" + (isValid(datum[\"Country\"]) ? datum[\"Country\"] : \"\"+datum[\"Country\"]) + \"; Year: \" + (isValid(datum[\"Year\"]) ? datum[\"Year\"] : \"\"+datum[\"Year\"]) + \"; Forest Coverage (%): \" + (format(datum[\"Coverage\"], \".2f\"))"
+          },
+          "x": {"scale": "x", "field": "Coverage"},
+          "y": {"scale": "y", "field": "Country"},
+          "size": {"value": 100}
+        }
+      }
+    }
+  ],
+  "scales": [
+    {
+      "name": "x",
+      "type": "linear",
+      "domain": {
+        "fields": [
+          {"data": "source_0", "field": "Coverage"},
+          {"data": "data_0", "field": "Coverage"}
+        ]
+      },
+      "range": [0, {"signal": "width"}],
+      "nice": true,
+      "zero": true
+    },
+    {
+      "name": "y",
+      "type": "point",
+      "domain": {
+        "fields": [
+          {"data": "source_0", "field": "Country"},
+          {"data": "data_0", "field": "Country"}
+        ],
+        "sort": true
+      },
+      "range": {"step": {"signal": "y_step"}},
+      "padding": 0.5
+    },
+    {
+      "name": "color",
+      "type": "ordinal",
+      "domain": [1990, 2020],
+      "range": ["#e6959c", "#911a24"],
+      "interpolate": "hcl"
+    }
+  ],
+  "axes": [
+    {
+      "scale": "x",
+      "orient": "bottom",
+      "gridScale": "y",
+      "grid": true,
+      "tickCount": {"signal": "ceil(width/40)"},
+      "domain": false,
+      "labels": false,
+      "aria": false,
+      "maxExtent": 0,
+      "minExtent": 0,
+      "ticks": false,
+      "zindex": 0
+    },
+    {
+      "scale": "x",
+      "orient": "bottom",
+      "grid": false,
+      "title": "Forest Coverage (%))",
+      "labelFlush": true,
+      "labelOverlap": true,
+      "tickCount": {"signal": "ceil(width/40)"},
+      "zindex": 0
+    },
+    {
+      "scale": "y",
+      "orient": "left",
+      "grid": false,
+      "title": "Country",
+      "domain": false,
+      "minExtent": 70,
+      "offset": 5,
+      "ticks": false,
+      "zindex": 0
+    }
+  ],
+  "legends": [
+    {
+      "title": "Year",
+      "fill": "color",
+      "symbolType": "circle",
+      "encode": {"symbols": {"update": {"opacity": {"value": 1}}}}
+    }
+  ],
+  "config": {}
+}

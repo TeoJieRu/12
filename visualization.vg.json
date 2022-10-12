@@ -1,0 +1,369 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v5.json",
+  "background": "white",
+  "padding": 5,
+  "width": 700,
+  "height": 380,
+  "title": {
+    "text": "Forest Coverage of Countries in 2020",
+    "fontSize": 20,
+    "frame": "group"
+  },
+  "data": [
+    {"name": "highlight_store"},
+    {"name": "select_store"},
+    {
+      "name": "source_3",
+      "url": "https://raw.githubusercontent.com/TeoJieRu/Visualisation2/main/forest/use1.csv",
+      "format": {"type": "csv", "delimiter": ","}
+    },
+    {
+      "name": "source_0",
+      "url": "https://raw.githubusercontent.com/TeoJieRu/Visualisation2/main/topojson/ne_110m.topojson",
+      "format": {
+        "type": "topojson",
+        "feature": "ne_110m_admin_0_countries",
+        "parse": {}
+      },
+      "transform": [
+        {
+          "type": "formula",
+          "expr": "datum[\"properties\"] && datum[\"properties\"][\"NAME\"]",
+          "as": "properties.NAME"
+        },
+        {"type": "identifier", "as": "_vgsid_"}
+      ]
+    },
+    {
+      "name": "data_0",
+      "source": "source_0",
+      "transform": [
+        {
+          "type": "formula",
+          "expr": "'Data of ' + datum.properties.NAME + ' is unavailable'",
+          "as": "unavailable"
+        }
+      ]
+    },
+    {
+      "name": "data_1",
+      "source": "source_0",
+      "transform": [
+        {
+          "type": "lookup",
+          "from": "source_3",
+          "key": "Country",
+          "fields": ["properties.NAME"],
+          "values": ["2020"]
+        },
+        {
+          "type": "filter",
+          "expr": "isValid(datum[\"2020\"]) && isFinite(+datum[\"2020\"])"
+        }
+      ]
+    },
+    {
+      "name": "source_1",
+      "url": "https://raw.githubusercontent.com/TeoJieRu/Visualisation2/main/topojson/ne_110m_ocean.topojson",
+      "format": {"type": "topojson", "feature": "oceans"},
+      "transform": [{"type": "identifier", "as": "_vgsid_"}]
+    },
+    {
+      "name": "source_2",
+      "url": "https://raw.githubusercontent.com/TeoJieRu/Visualisation2/main/topojson/ne_110m.topojson",
+      "format": {"type": "topojson", "feature": "ne_110m_graticules_30"},
+      "transform": [{"type": "identifier", "as": "_vgsid_"}]
+    }
+  ],
+  "projections": [
+    {
+      "name": "projection",
+      "translate": {"signal": "[width / 2, height / 2]"},
+      "type": "equalEarth",
+      "scale": {"signal": "zoom_level"},
+      "center": {"signal": "center_to"}
+    }
+  ],
+  "signals": [
+    {
+      "name": "unit",
+      "value": {},
+      "on": [
+        {"events": "mousemove", "update": "isTuple(group()) ? group() : unit"}
+      ]
+    },
+    {
+      "name": "highlight",
+      "update": "vlSelectionResolve(\"highlight_store\", \"union\", true, true)"
+    },
+    {
+      "name": "select",
+      "update": "vlSelectionResolve(\"select_store\", \"union\", true, true)"
+    },
+    {
+      "name": "zoom_level",
+      "value": 120,
+      "bind": {
+        "input": "range",
+        "min": 120,
+        "max": 240,
+        "step": 10,
+        "name": "Zoom: "
+      }
+    },
+    {
+      "name": "center_to",
+      "value": [0, 0],
+      "bind": {
+        "input": "select",
+        "options": [
+          [0, 0],
+          [100, 26],
+          [10, 0],
+          [-120, 36.7],
+          [-100, -22],
+          [0, -40],
+          [5, 38],
+          [147.1, -36.1]
+        ],
+        "labels": [
+          "Centre",
+          "Asia",
+          "Africa",
+          "North America",
+          "South America",
+          "Antarctica",
+          "Europe",
+          "Oceania"
+        ],
+        "name": "Map Centre: "
+      }
+    },
+    {
+      "name": "highlight_tuple",
+      "on": [
+        {
+          "events": [{"source": "scope", "type": "mouseover"}],
+          "update": "datum && item().mark.marktype !== 'group' ? {unit: \"layer_0\", fields: highlight_tuple_fields, values: [(item().isVoronoi ? datum.datum : datum)[\"_vgsid_\"]]} : null",
+          "force": true
+        },
+        {"events": [{"source": "view", "type": "dblclick"}], "update": "null"}
+      ]
+    },
+    {
+      "name": "highlight_tuple_fields",
+      "value": [{"type": "E", "field": "_vgsid_"}]
+    },
+    {
+      "name": "highlight_toggle",
+      "value": false,
+      "on": [
+        {
+          "events": [{"source": "scope", "type": "mouseover"}],
+          "update": "event.shiftKey"
+        },
+        {"events": [{"source": "view", "type": "dblclick"}], "update": "false"}
+      ]
+    },
+    {
+      "name": "highlight_modify",
+      "on": [
+        {
+          "events": {"signal": "highlight_tuple"},
+          "update": "modify(\"highlight_store\", highlight_toggle ? null : highlight_tuple, highlight_toggle ? null : true, highlight_toggle ? highlight_tuple : null)"
+        }
+      ]
+    },
+    {
+      "name": "select_tuple",
+      "on": [
+        {
+          "events": [{"source": "scope", "type": "click"}],
+          "update": "datum && item().mark.marktype !== 'group' ? {unit: \"layer_0\", fields: select_tuple_fields, values: [(item().isVoronoi ? datum.datum : datum)[\"_vgsid_\"]]} : null",
+          "force": true
+        },
+        {"events": [{"source": "view", "type": "dblclick"}], "update": "null"}
+      ]
+    },
+    {
+      "name": "select_tuple_fields",
+      "value": [{"type": "E", "field": "_vgsid_"}]
+    },
+    {
+      "name": "select_toggle",
+      "value": false,
+      "on": [
+        {
+          "events": [{"source": "scope", "type": "click"}],
+          "update": "event.shiftKey"
+        },
+        {"events": [{"source": "view", "type": "dblclick"}], "update": "false"}
+      ]
+    },
+    {
+      "name": "select_modify",
+      "on": [
+        {
+          "events": {"signal": "select_tuple"},
+          "update": "modify(\"select_store\", select_toggle ? null : select_tuple, select_toggle ? null : true, select_toggle ? select_tuple : null)"
+        }
+      ]
+    }
+  ],
+  "marks": [
+    {
+      "name": "layer_0_marks",
+      "type": "shape",
+      "clip": true,
+      "style": ["geoshape"],
+      "interactive": true,
+      "from": {"data": "data_0"},
+      "encode": {
+        "update": {
+          "fill": {"value": "lightgrey"},
+          "stroke": [
+            {
+              "test": "length(data(\"select_store\")) && vlSelectionTest(\"select_store\", datum)",
+              "value": "black"
+            },
+            {
+              "test": "length(data(\"highlight_store\")) && vlSelectionTest(\"highlight_store\", datum)",
+              "value": "black"
+            },
+            {"value": "grey"}
+          ],
+          "fillOpacity": [
+            {
+              "test": "!length(data(\"select_store\")) || vlSelectionTest(\"select_store\", datum)",
+              "value": 1
+            },
+            {"value": 0.3}
+          ],
+          "strokeWidth": [
+            {
+              "test": "length(data(\"select_store\")) && vlSelectionTest(\"select_store\", datum)",
+              "value": 2.2
+            },
+            {
+              "test": "length(data(\"highlight_store\")) && vlSelectionTest(\"highlight_store\", datum)",
+              "value": 1.5
+            },
+            {"value": 0.3}
+          ],
+          "tooltip": {
+            "signal": "isValid(datum[\"unavailable\"]) ? datum[\"unavailable\"] : \"\"+datum[\"unavailable\"]"
+          },
+          "ariaRoleDescription": {"value": "geoshape"},
+          "description": {
+            "signal": "\"unavailable: \" + (isValid(datum[\"unavailable\"]) ? datum[\"unavailable\"] : \"\"+datum[\"unavailable\"])"
+          }
+        }
+      },
+      "transform": [{"type": "geoshape", "projection": "projection"}]
+    },
+    {
+      "name": "layer_1_marks",
+      "type": "shape",
+      "clip": true,
+      "style": ["geoshape"],
+      "interactive": false,
+      "from": {"data": "source_1"},
+      "encode": {
+        "update": {
+          "fill": {"value": "lightskyblue"},
+          "ariaRoleDescription": {"value": "geoshape"}
+        }
+      },
+      "transform": [{"type": "geoshape", "projection": "projection"}]
+    },
+    {
+      "name": "layer_2_marks",
+      "type": "shape",
+      "clip": true,
+      "style": ["geoshape"],
+      "interactive": false,
+      "from": {"data": "source_2"},
+      "encode": {
+        "update": {
+          "fill": {"value": null},
+          "stroke": {"value": "lightgrey"},
+          "strokeWidth": {"value": 1},
+          "ariaRoleDescription": {"value": "geoshape"}
+        }
+      },
+      "transform": [{"type": "geoshape", "projection": "projection"}]
+    },
+    {
+      "name": "layer_3_marks",
+      "type": "shape",
+      "clip": true,
+      "style": ["geoshape"],
+      "interactive": true,
+      "from": {"data": "data_1"},
+      "encode": {
+        "update": {
+          "stroke": [
+            {
+              "test": "length(data(\"select_store\")) && vlSelectionTest(\"select_store\", datum)",
+              "value": "black"
+            },
+            {
+              "test": "length(data(\"highlight_store\")) && vlSelectionTest(\"highlight_store\", datum)",
+              "value": "black"
+            },
+            {"value": "grey"}
+          ],
+          "strokeWidth": [
+            {
+              "test": "length(data(\"select_store\")) && vlSelectionTest(\"select_store\", datum)",
+              "value": 2.2
+            },
+            {
+              "test": "length(data(\"highlight_store\")) && vlSelectionTest(\"highlight_store\", datum)",
+              "value": 1.5
+            },
+            {"value": 0.5}
+          ],
+          "fill": [
+            {"test": "datum['2020'] === null ", "value": "lightgrey"},
+            {"scale": "color", "field": "2020"}
+          ],
+          "fillOpacity": [
+            {
+              "test": "!length(data(\"select_store\")) || vlSelectionTest(\"select_store\", datum)",
+              "value": 1
+            },
+            {"value": 0.3}
+          ],
+          "tooltip": {
+            "signal": "{\"Country\": isValid(datum[\"properties.NAME\"]) ? datum[\"properties.NAME\"] : \"\"+datum[\"properties.NAME\"], \"Forest Coverage (%)\": format(datum[\"2020\"], \"\")}"
+          },
+          "ariaRoleDescription": {"value": "geoshape"},
+          "description": {
+            "signal": "\"2020: \" + (format(datum[\"2020\"], \"\")) + \"; Country: \" + (isValid(datum[\"properties.NAME\"]) ? datum[\"properties.NAME\"] : \"\"+datum[\"properties.NAME\"]) + \"; Forest Coverage (%): \" + (format(datum[\"2020\"], \"\"))"
+          }
+        }
+      },
+      "transform": [{"type": "geoshape", "projection": "projection"}]
+    }
+  ],
+  "scales": [
+    {
+      "name": "color",
+      "type": "linear",
+      "domain": {"data": "data_1", "field": "2020"},
+      "range": "heatmap",
+      "interpolate": "hcl",
+      "zero": false
+    }
+  ],
+  "legends": [
+    {
+      "title": "Forest Coverage (%)",
+      "titleAlign": "center",
+      "fill": "color",
+      "gradientLength": {"signal": "clamp(height, 64, 200)"}
+    }
+  ],
+  "config": {}
+}
